@@ -1,0 +1,53 @@
+version: "3.7"
+
+networks:
+  vote:
+    driver: bridge
+
+services:
+  result:
+    image: stevejeske/result
+    build:
+      context: ./result
+      dockerfile: Dockerfile
+    ports:
+      - 5001:80
+    networks:
+      - vote
+    depends_on:
+      - db
+
+  vote:
+    image: stevejeske/vote
+    build:
+      context: ./vote
+      dockerfile: Dockerfile
+    ports:
+      - 5000:80
+    networks:
+      - vote
+    depends_on:
+      - redis
+
+  worker:
+    image: stevejeske/worker
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    networks:
+      - vote
+    depends_on:
+      - db
+      - redis
+
+  redis:
+    image: redis:6.2-alpine
+    networks:
+      - vote
+
+  db:
+    image: postgres:15.2-alpine
+    networks:
+      - vote
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
